@@ -6,8 +6,8 @@ import { getCarRecommendations, getCarRecommendationsFromAudio } from './service
 import QuestionCard from './components/QuestionCard';
 import ResultsDisplay from './components/ResultsDisplay';
 import LoadingSpinner from './components/LoadingSpinner';
-import { CarIcon } from './components/icons/CarIcon';
 import VoiceSearch from './components/VoiceSearch';
+import { BrandLogo } from './components/BrandLogo';
 
 const App: React.FC = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -85,8 +85,8 @@ const App: React.FC = () => {
     
     if (error) {
       return (
-        <div className="text-center p-8 bg-red-900/20 rounded-lg animate-fade-in">
-          <p className="text-red-400 mb-6 text-lg">{error}</p>
+        <div className="text-center p-8 bg-red-900/10 border border-red-500/20 rounded-xl animate-fade-in backdrop-blur-sm">
+          <p className="text-red-400 mb-6 text-lg font-medium">{error}</p>
           <button
             onClick={handleReset}
             className="bg-slate-700 hover:bg-slate-600 text-white font-bold py-3 px-6 rounded-lg transition-colors flex items-center gap-2 mx-auto"
@@ -105,7 +105,7 @@ const App: React.FC = () => {
     if (searchPerformed && recommendations.length === 0) {
       return (
         <div className="text-center p-8 animate-fade-in">
-          <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-700 rounded-full mb-6">
+          <div className="inline-flex items-center justify-center w-20 h-20 bg-slate-700/50 rounded-full mb-6 border border-slate-600">
              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="text-slate-400">
                 <circle cx="11" cy="11" r="8"></circle>
                 <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
@@ -113,12 +113,12 @@ const App: React.FC = () => {
              </svg>
           </div>
           <h2 className="text-2xl font-bold text-slate-200 mb-4">Nenhum resultado encontrado</h2>
-          <p className="text-slate-400 mb-8 max-w-md mx-auto">
+          <p className="text-slate-400 mb-8 max-w-md mx-auto leading-relaxed">
             Não conseguimos encontrar carros que correspondam exatamente a todos os seus critérios. Tente ajustar suas respostas ou aumentar o orçamento.
           </p>
           <button
             onClick={handleReset}
-            className="bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 shadow-lg shadow-sky-900/40 flex items-center gap-2 mx-auto transform hover:scale-105"
+            className="bg-sky-600 hover:bg-sky-500 text-white font-bold py-3 px-8 rounded-lg transition-all duration-300 shadow-lg shadow-sky-900/40 flex items-center gap-2 mx-auto transform hover:scale-105 uppercase tracking-wide text-sm"
           >
             <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
@@ -142,9 +142,9 @@ const App: React.FC = () => {
       const currentQuestion = QUESTIONS[currentQuestionIndex];
       return (
         <div className="w-full">
-           <div className="w-full bg-slate-700 rounded-full h-2.5 mb-6">
+           <div className="w-full bg-slate-700/50 rounded-full h-2 mb-8 backdrop-blur-sm">
                 <div 
-                    className="bg-sky-500 h-2.5 rounded-full transition-all duration-500" 
+                    className="bg-sky-500 h-2 rounded-full transition-all duration-500 shadow-[0_0_10px_rgba(14,165,233,0.5)]" 
                     style={{width: `${progressPercentage}%`}}
                 ></div>
             </div>
@@ -153,11 +153,11 @@ const App: React.FC = () => {
             onAnswer={handleAnswer}
             currentAnswer={answers[currentQuestion.id]}
           />
-          <div className="mt-8 text-center">
+          <div className="mt-10 text-center">
             <button
               onClick={handleNext}
               disabled={!answers[currentQuestion.id]}
-              className="bg-sky-600 text-white font-bold py-3 px-8 rounded-lg hover:bg-sky-500 disabled:bg-slate-600 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105"
+              className="bg-sky-600 text-white font-bold py-4 px-10 rounded-xl hover:bg-sky-500 disabled:bg-slate-700/50 disabled:text-slate-500 disabled:cursor-not-allowed transition-all duration-300 transform hover:scale-105 uppercase tracking-wide shadow-lg shadow-sky-900/30"
             >
               {currentQuestionIndex < QUESTIONS.length - 1 ? 'Próxima Pergunta' : 'Ver Recomendações'}
             </button>
@@ -167,23 +167,25 @@ const App: React.FC = () => {
     }
     
     return (
-      <div className="text-center flex flex-col items-center animate-fade-in">
-        <h1 className="text-4xl md:text-5xl font-bold text-sky-400 mb-4">Seu Guia de Carros Seminovos</h1>
-        <p className="text-slate-300 text-lg md:text-xl max-w-2xl mb-10">
-          Não sabe qual carro comprar? Responda algumas perguntas ou nos conte o que procura, e nossa IA encontrará as melhores opções para você.
+      <div className="text-center flex flex-col items-center animate-fade-in py-4">
+        <h1 className="text-3xl md:text-4xl font-bold text-white mb-4 tracking-tight">
+          Encontre seu <span className="text-sky-400">Carro Ideal</span>
+        </h1>
+        <p className="text-slate-400 text-lg md:text-xl max-w-2xl mb-12 font-light leading-relaxed">
+          Responda algumas perguntas ou use sua voz para encontrar as melhores opções de seminovos no mercado.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg justify-center">
             <button
             onClick={() => setQuizStarted(true)}
-            className="flex-1 bg-sky-600 text-white font-bold py-4 px-6 rounded-lg hover:bg-sky-500 transition-all duration-300 text-lg transform hover:scale-105 shadow-lg shadow-sky-900/50"
+            className="flex-1 bg-sky-600 text-white font-bold py-4 px-6 rounded-xl hover:bg-sky-500 transition-all duration-300 text-lg transform hover:scale-105 shadow-lg shadow-sky-900/50 uppercase tracking-wide"
             >
             Começar Quiz
             </button>
             
             <button
             onClick={() => setIsVoiceMode(true)}
-            className="flex-1 bg-slate-700 text-sky-400 border border-slate-600 font-bold py-4 px-6 rounded-lg hover:bg-slate-600 hover:border-sky-500 hover:text-sky-300 transition-all duration-300 text-lg flex items-center justify-center gap-2"
+            className="flex-1 bg-slate-800 text-sky-400 border border-slate-700 font-bold py-4 px-6 rounded-xl hover:bg-slate-700 hover:border-sky-500/50 hover:text-sky-300 transition-all duration-300 text-lg flex items-center justify-center gap-2 uppercase tracking-wide"
             >
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
@@ -191,7 +193,7 @@ const App: React.FC = () => {
                 <line x1="12" y1="19" x2="12" y2="23"></line>
                 <line x1="8" y1="23" x2="16" y2="23"></line>
             </svg>
-            Falar o que procuro
+            Usar Voz
             </button>
         </div>
       </div>
@@ -200,16 +202,17 @@ const App: React.FC = () => {
 
 
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 font-sans">
+    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 font-sans selection:bg-sky-500/30 selection:text-sky-200">
       <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
-        <header className="mb-8 flex items-center gap-4">
-          <CarIcon className="w-12 h-12 text-sky-500" />
-          <h1 className="text-3xl font-bold tracking-tight text-slate-200">Guia de Carros</h1>
+        <header className="mb-10 w-full flex justify-center">
+          <BrandLogo className="transform hover:scale-105 transition-transform duration-500" />
         </header>
-        <main className="w-full max-w-2xl bg-slate-800/50 p-6 sm:p-8 rounded-2xl shadow-2xl border border-slate-700">
+        
+        <main className="w-full max-w-3xl bg-slate-800/40 p-6 sm:p-10 rounded-3xl shadow-2xl border border-slate-700/50 backdrop-blur-md">
           {renderContent()}
         </main>
-        <footer className="mt-8 text-slate-500 text-sm text-center">
+        
+        <footer className="mt-12 text-slate-500 text-sm font-medium tracking-wide text-center uppercase">
           © {new Date().getFullYear()} Reinaldo Ribas. Todos os direitos reservados.
         </footer>
       </div>
