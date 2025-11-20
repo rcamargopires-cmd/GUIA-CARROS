@@ -8,6 +8,7 @@ import ResultsDisplay from './components/ResultsDisplay';
 import LoadingSpinner from './components/LoadingSpinner';
 import VoiceSearch from './components/VoiceSearch';
 import FavoritesDisplay from './components/FavoritesDisplay';
+import ComparisonView from './components/ComparisonView';
 import { BrandLogo } from './components/BrandLogo';
 import { AdSpace } from './components/AdSpace';
 import { HeartIcon } from './components/icons/HeartIcon';
@@ -24,6 +25,10 @@ const App: React.FC = () => {
   const [userLocation, setUserLocation] = useState<string>("");
   const [favorites, setFavorites] = useState<CarRecommendation[]>([]);
   const [showFavorites, setShowFavorites] = useState(false);
+  
+  // Estado para comparação
+  const [comparisonList, setComparisonList] = useState<CarRecommendation[]>([]);
+  const [showComparison, setShowComparison] = useState(false);
 
   // Carregar favoritos do localStorage ao iniciar
   useEffect(() => {
@@ -82,6 +87,18 @@ const App: React.FC = () => {
     });
   };
 
+  const toggleComparison = (car: CarRecommendation) => {
+    setComparisonList(prev => {
+        const exists = prev.some(c => c.modelName === car.modelName);
+        if (exists) {
+            return prev.filter(c => c.modelName !== car.modelName);
+        } else {
+            if (prev.length >= 3) return prev; // Limite máximo
+            return [...prev, car];
+        }
+    });
+  };
+
   const handleSubmit = async () => {
     setIsLoading(true);
     setError(null);
@@ -120,6 +137,7 @@ const App: React.FC = () => {
     setCurrentQuestionIndex(0);
     setAnswers({});
     setRecommendations([]);
+    setComparisonList([]); // Limpa comparação ao resetar
     setError(null);
     setIsLoading(false);
     setQuizStarted(false);
@@ -136,7 +154,9 @@ const App: React.FC = () => {
             <FavoritesDisplay 
                 favorites={favorites} 
                 onToggleFavorite={toggleFavorite} 
-                onBack={() => setShowFavorites(false)} 
+                onBack={() => setShowFavorites(false)}
+                comparisonList={comparisonList}
+                onToggleComparison={toggleComparison} 
             />
         );
     }
@@ -199,6 +219,9 @@ const App: React.FC = () => {
             onReset={handleReset} 
             favorites={favorites}
             onToggleFavorite={toggleFavorite}
+            comparisonList={comparisonList}
+            onToggleComparison={toggleComparison}
+            onOpenComparison={() => setShowComparison(true)}
         />
       );
     }
@@ -272,6 +295,16 @@ const App: React.FC = () => {
   return (
     <div className="min-h-screen bg-slate-900 text-slate-200 font-sans selection:bg-sky-500/30 selection:text-sky-200">
         <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-slate-950 pointer-events-none"></div>
+        
+        {/* Comparison Modal Overlay */}
+        {showComparison && (
+            <ComparisonView 
+                cars={comparisonList} 
+                onClose={() => setShowComparison(false)} 
+                onRemove={toggleComparison}
+            />
+        )}
+
         <div className="relative z-10 container mx-auto px-4 py-8 md:py-12 flex flex-col min-h-screen max-w-4xl">
             
             <header className="flex flex-col md:flex-row justify-between items-center mb-10 md:mb-16 animate-fade-in-down gap-4 relative">
@@ -308,7 +341,7 @@ const App: React.FC = () => {
             </main>
             
             {/* Área de Propaganda Banner (Footer) */}
-            <div className="w-full mt-16 animate-fade-in">
+            <div className="w-full mt-16 animate-fade-in pb-20">
                 <AdSpace variant="banner" />
             </div>
 

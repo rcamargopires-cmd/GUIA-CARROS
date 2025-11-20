@@ -9,14 +9,25 @@ import { ShieldIcon } from './icons/ShieldIcon';
 import { WrenchIcon } from './icons/WrenchIcon';
 import { HeartIcon } from './icons/HeartIcon';
 import { ShareIcon } from './icons/ShareIcon';
+import { CompareIcon } from './icons/CompareIcon';
 
 interface CarCardProps {
   car: CarRecommendation;
   isFavorite?: boolean;
   onToggleFavorite?: (car: CarRecommendation) => void;
+  isSelectedForComparison?: boolean;
+  onToggleComparison?: (car: CarRecommendation) => void;
+  disableComparison?: boolean;
 }
 
-const CarCard: React.FC<CarCardProps> = ({ car, isFavorite = false, onToggleFavorite }) => {
+const CarCard: React.FC<CarCardProps> = ({ 
+    car, 
+    isFavorite = false, 
+    onToggleFavorite,
+    isSelectedForComparison = false,
+    onToggleComparison,
+    disableComparison = false
+}) => {
   const [showDetails, setShowDetails] = useState(false);
   const [showVersionDiffs, setShowVersionDiffs] = useState(false);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
@@ -27,6 +38,13 @@ const CarCard: React.FC<CarCardProps> = ({ car, isFavorite = false, onToggleFavo
     e.stopPropagation();
     if (onToggleFavorite) {
         onToggleFavorite(car);
+    }
+  };
+
+  const handleComparisonClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onToggleComparison) {
+        onToggleComparison(car);
     }
   };
 
@@ -79,12 +97,17 @@ const CarCard: React.FC<CarCardProps> = ({ car, isFavorite = false, onToggleFavo
   };
 
   return (
-    <div className="bg-slate-800 rounded-xl overflow-hidden shadow-lg border border-slate-700 transition-all duration-300 hover:border-sky-500 hover:shadow-sky-900/40 flex flex-col relative">
+    <div className={`
+        rounded-xl overflow-hidden shadow-lg transition-all duration-300 flex flex-col relative
+        ${isSelectedForComparison 
+            ? 'bg-slate-800 border-2 border-sky-500 shadow-[0_0_20px_rgba(14,165,233,0.3)]' 
+            : 'bg-slate-800 border border-slate-700 hover:border-sky-500/50 hover:shadow-sky-900/40'}
+    `}>
       <div className="p-6 flex flex-col">
         {/* Header Section (Always Visible & Clickable) */}
         <div 
           onClick={toggleDetails}
-          className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4 border-b border-slate-700 pb-4 cursor-pointer group pr-20 md:pr-24"
+          className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4 border-b border-slate-700 pb-4 cursor-pointer group pr-28 md:pr-32"
         >
           <div className="flex flex-col gap-1">
              <div className="flex items-center gap-2">
@@ -121,8 +144,33 @@ const CarCard: React.FC<CarCardProps> = ({ car, isFavorite = false, onToggleFavo
           </div>
         </div>
 
-        {/* Action Buttons (Favorite & Share) - Positioned Absolutely top right */}
+        {/* Action Buttons - Positioned Absolutely top right */}
         <div className="absolute top-6 right-6 z-10 flex items-center gap-2">
+             {/* Compare Button */}
+             {onToggleComparison && (
+                <button
+                    onClick={handleComparisonClick}
+                    disabled={!isSelectedForComparison && disableComparison}
+                    className={`
+                        p-2 rounded-full transition-colors relative group/compare
+                        ${isSelectedForComparison 
+                            ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30' 
+                            : disableComparison
+                                ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
+                                : 'bg-slate-900/50 text-slate-400 hover:bg-slate-700 hover:text-sky-400'
+                        }
+                    `}
+                    title={isSelectedForComparison ? "Remover da comparação" : disableComparison ? "Limite de comparação atingido" : "Comparar"}
+                >
+                    <CompareIcon className="w-5 h-5" />
+                    {!isSelectedForComparison && !disableComparison && (
+                         <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover/compare:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-slate-700">
+                            Comparar
+                         </span>
+                    )}
+                </button>
+            )}
+
             {/* Share Button */}
             <div className="relative">
                 <button 

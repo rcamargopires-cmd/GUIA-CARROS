@@ -106,20 +106,48 @@ function formatPrompt(answers: Answers, userLocation: string): string {
        - Exemplos PROIBIDOS: VW Gol, VW Fox, VW Voyage, VW Up!, Ford Ka, Ford Fiesta, Ford EcoSport, Toyota Etios, Honda Fit, Fiat Palio, Fiat Uno, Fiat Punto.
        - Recomende APENAS modelos que ainda estão "vivos" no mercado (ex: Polo, HB20, Onix, Creta, T-Cross, Tracker, Renegade, Compass, etc).
     
-    Para cada carro, forneça:
-    1. O nome do modelo.
-    2. Termo de busca.
-    3. Resumo.
-    4. Prós e Contras.
-    5. Faixa de preço.
-    6. Versões principais.
-    7. Consumo (Cidade/Estrada).
-    8. Nota de satisfação.
-    9. **ESTIMATIVA DE SEGURO**: Calcule uma média aproximada anual considerando a categoria do carro e a LOCALIZAÇÃO do cliente (${userLocation}).
-    10. **CUSTO DE MANUTENÇÃO**: Estime o custo médio anual de manutenção básica.
+    Para cada carro, forneça os dados técnicos.
+    
+    **ATENÇÃO ESPECIAL AOS CUSTOS (Seja Realista):**
+
+    9. **ESTIMATIVA DE SEGURO**: 
+       - Use a LOCALIZAÇÃO (${userLocation}) para calibrar o valor. Se for uma capital ou região metropolitana (ex: SP, RJ), considere valores 20-30% mais altos que a média nacional.
+       - Considere o perfil de risco do modelo (ex: SUVs muito visados tem seguro mais caro).
+       - Formato esperado: "Aprox. R$ X.XXX/ano".
+
+    10. **CUSTO DE MANUTENÇÃO**: 
+        - Estime o custo anual de manutenção básica (troca de óleo, filtros, desgaste natural).
+        - Considere a CATEGORIA do carro: Importados e Premium (Audi, Chery SUVs maiores) devem ter manutenção mais cara que populares nacionais (VW, Hyundai compactos).
+        - Formato esperado: "Média R$ X.XXX/ano".
     
     Seja específico e direto nas suas recomendações.
   `;
+}
+
+/**
+ * Helper function to call Gemini API with retry logic for 503 errors.
+ */
+async function generateContentWithRetry(modelParams: any, retries = 3) {
+    for (let i = 0; i < retries; i++) {
+        try {
+            return await ai.models.generateContent(modelParams);
+        } catch (error: any) {
+            // Check for Service Unavailable (503) or Overloaded messages
+            const isOverloaded = error.status === 503 || 
+                                 error.code === 503 || 
+                                 (error.message && (error.message.includes('503') || error.message.includes('overloaded'))) ||
+                                 error.status === 429; // Also retry on Too Many Requests
+
+            if (isOverloaded && i < retries - 1) {
+                // Exponential backoff: 1s, 2s, 4s...
+                const delay = Math.pow(2, i) * 1000 + Math.random() * 500;
+                console.warn(`Gemini API overloaded (Attempt ${i + 1}/${retries}). Retrying in ${delay.toFixed(0)}ms...`);
+                await new Promise(resolve => setTimeout(resolve, delay));
+                continue;
+            }
+            throw error;
+        }
+    }
 }
 
 export async function getCarRecommendations(answers: Answers, userLocation: string): Promise<CarRecommendation[]> {
@@ -127,7 +155,7 @@ export async function getCarRecommendations(answers: Answers, userLocation: stri
   const prompt = formatPrompt(answers, userLocation);
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithRetry({
       model: "gemini-2.5-flash",
       contents: prompt,
       config: {
@@ -157,7 +185,7 @@ export async function getCarRecommendationsFromAudio(base64Audio: string, mimeTy
     Atue como um consultor de vendas experiente da 'Abraão Reze Seminovos'.
     
     O usuário forneceu um áudio descrevendo o que procura em um carro seminovo.
-    A localização do usuário é: ${userLocation || "Média Nacional"}. Use isso para estimar o valor do SEGURO.
+    A localização do usuário é: ${userLocation || "Média Nacional"}.
 
     Ouça com atenção e identifique:
     - Orçamento (se não mencionado, deduza um valor médio razoável).
@@ -178,14 +206,17 @@ export async function getCarRecommendationsFromAudio(base64Audio: string, mimeTy
     1. JAMAIS recomende carros equipados com o câmbio automatizado POWERSHIFT.
     2. JAMAIS recomende carros FORA DE LINHA (descontinuados).
        - Não sugira: Gol, Fox, Voyage, Ka, Fiesta, Ecosport, Etios, Fit, Uno, Palio, etc.
-       - Sugira APENAS modelos que ainda estão em produção (ex: Polo, HB20, Creta, T-Cross, etc).
+       - Sugira APENAS modelos que ainda estão em produção.
 
-    Inclua estimativas de **Seguro Anual** (baseado na localização) e **Manutenção Anual**.
+    **CÁLCULO DE CUSTOS:**
+    - **Seguro Anual**: Utilize a localização (${userLocation}) para estimar. Se for capital, aumente o valor. Considere se o carro é visado para roubo.
+    - **Manutenção Anual**: Considere a complexidade mecânica da marca e categoria (Premium > Popular).
+
     Preencha todos os campos do esquema JSON solicitado.
   `;
 
   try {
-    const response = await ai.models.generateContent({
+    const response = await generateContentWithRetry({
       model: "gemini-2.5-flash",
       contents: {
         parts: [

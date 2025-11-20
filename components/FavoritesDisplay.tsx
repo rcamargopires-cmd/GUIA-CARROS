@@ -8,9 +8,17 @@ interface FavoritesDisplayProps {
   favorites: CarRecommendation[];
   onToggleFavorite: (car: CarRecommendation) => void;
   onBack: () => void;
+  comparisonList: CarRecommendation[];
+  onToggleComparison: (car: CarRecommendation) => void;
 }
 
-const FavoritesDisplay: React.FC<FavoritesDisplayProps> = ({ favorites, onToggleFavorite, onBack }) => {
+const FavoritesDisplay: React.FC<FavoritesDisplayProps> = ({ 
+    favorites, 
+    onToggleFavorite, 
+    onBack,
+    comparisonList,
+    onToggleComparison
+}) => {
   return (
     <div className="w-full animate-fade-in">
       <div className="flex items-center justify-between mb-8">
@@ -46,14 +54,20 @@ const FavoritesDisplay: React.FC<FavoritesDisplayProps> = ({ favorites, onToggle
         </div>
       ) : (
         <div className="space-y-6">
-          {favorites.map((car, index) => (
-            <CarCard 
-                key={index} 
-                car={car} 
-                isFavorite={true}
-                onToggleFavorite={() => onToggleFavorite(car)}
-            />
-          ))}
+          {favorites.map((car, index) => {
+            const isSelectedForComparison = comparisonList.some(c => c.modelName === car.modelName);
+            return (
+                <CarCard 
+                    key={index} 
+                    car={car} 
+                    isFavorite={true}
+                    onToggleFavorite={() => onToggleFavorite(car)}
+                    isSelectedForComparison={isSelectedForComparison}
+                    onToggleComparison={onToggleComparison}
+                    disableComparison={!isSelectedForComparison && comparisonList.length >= 3}
+                />
+            );
+          })}
         </div>
       )}
     </div>
