@@ -21,6 +21,8 @@ export interface CarRecommendation {
   consumptionCity: string;
   consumptionRoad: string;
   consumerRating: number;
+  insuranceCost: string;
+  maintenanceCost: string;
 }
 
 export type Answers = Record<string, string>;

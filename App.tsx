@@ -1,5 +1,5 @@
 
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import { QUESTIONS } from './constants';
 import type { Answers, CarRecommendation } from './types';
 import { getCarRecommendations, getCarRecommendationsFromAudio } from './services/geminiService';
@@ -7,7 +7,10 @@ import QuestionCard from './components/QuestionCard';
 import ResultsDisplay from './components/ResultsDisplay';
 import LoadingSpinner from './components/LoadingSpinner';
 import VoiceSearch from './components/VoiceSearch';
+import FavoritesDisplay from './components/FavoritesDisplay';
 import { BrandLogo } from './components/BrandLogo';
+import { AdSpace } from './components/AdSpace';
+import { HeartIcon } from './components/icons/HeartIcon';
 
 const App: React.FC = () => {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
@@ -18,6 +21,43 @@ const App: React.FC = () => {
   const [quizStarted, setQuizStarted] = useState(false);
   const [isVoiceMode, setIsVoiceMode] = useState(false);
   const [searchPerformed, setSearchPerformed] = useState(false);
+  const [userLocation, setUserLocation] = useState<string>("");
+  const [favorites, setFavorites] = useState<CarRecommendation[]>([]);
+  const [showFavorites, setShowFavorites] = useState(false);
+
+  // Carregar favoritos do localStorage ao iniciar
+  useEffect(() => {
+    const savedFavorites = localStorage.getItem('carFavorites');
+    if (savedFavorites) {
+        try {
+            setFavorites(JSON.parse(savedFavorites));
+        } catch (e) {
+            console.error("Erro ao carregar favoritos", e);
+        }
+    }
+  }, []);
+
+  // Salvar favoritos no localStorage sempre que mudar
+  useEffect(() => {
+    localStorage.setItem('carFavorites', JSON.stringify(favorites));
+  }, [favorites]);
+
+  // Captura a localização ao iniciar o app
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          // Formata a localização para enviar à IA
+          const loc = `Latitude: ${position.coords.latitude}, Longitude: ${position.coords.longitude}`;
+          setUserLocation(loc);
+        },
+        (error) => {
+          console.warn("Geolocalização não permitida ou indisponível:", error);
+          // Não bloqueamos o app, apenas seguimos sem a localização precisa
+        }
+      );
+    }
+  }, []);
 
   const handleAnswer = useCallback((questionId: string, answer: string) => {
     setAnswers(prev => ({ ...prev, [questionId]: answer }));
@@ -31,12 +71,23 @@ const App: React.FC = () => {
     }
   };
 
+  const toggleFavorite = (car: CarRecommendation) => {
+    setFavorites(prev => {
+        const exists = prev.some(f => f.modelName === car.modelName);
+        if (exists) {
+            return prev.filter(f => f.modelName !== car.modelName);
+        } else {
+            return [...prev, car];
+        }
+    });
+  };
+
   const handleSubmit = async () => {
     setIsLoading(true);
     setError(null);
     setSearchPerformed(false);
     try {
-      const result = await getCarRecommendations(answers);
+      const result = await getCarRecommendations(answers, userLocation);
       setRecommendations(result);
       setSearchPerformed(true);
     } catch (err) {
@@ -52,7 +103,7 @@ const App: React.FC = () => {
     setError(null);
     setSearchPerformed(false);
     try {
-      const result = await getCarRecommendationsFromAudio(base64Data, mimeType);
+      const result = await getCarRecommendationsFromAudio(base64Data, mimeType, userLocation);
       setRecommendations(result);
       setIsVoiceMode(false); // Exit voice mode to show results
       setSearchPerformed(true);
@@ -74,11 +125,22 @@ const App: React.FC = () => {
     setQuizStarted(false);
     setIsVoiceMode(false);
     setSearchPerformed(false);
+    setShowFavorites(false);
   };
   
   const progressPercentage = quizStarted ? ((currentQuestionIndex + 1) / QUESTIONS.length) * 100 : 0;
 
   const renderContent = () => {
+    if (showFavorites) {
+        return (
+            <FavoritesDisplay 
+                favorites={favorites} 
+                onToggleFavorite={toggleFavorite} 
+                onBack={() => setShowFavorites(false)} 
+            />
+        );
+    }
+
     if (isLoading) {
       return <LoadingSpinner />;
     }
@@ -131,7 +193,14 @@ const App: React.FC = () => {
     }
 
     if (recommendations.length > 0) {
-      return <ResultsDisplay recommendations={recommendations} onReset={handleReset} />;
+      return (
+        <ResultsDisplay 
+            recommendations={recommendations} 
+            onReset={handleReset} 
+            favorites={favorites}
+            onToggleFavorite={toggleFavorite}
+        />
+      );
     }
 
     if (isVoiceMode) {
@@ -172,7 +241,7 @@ const App: React.FC = () => {
           Encontre seu <span className="text-sky-400">Carro Ideal</span>
         </h1>
         <p className="text-slate-400 text-lg md:text-xl max-w-2xl mb-12 font-light leading-relaxed">
-          Responda algumas perguntas ou use sua voz para encontrar as melhores opções de seminovos no mercado.
+          Responda algumas perguntas ou use sua voz para encontrar as melhores opções de seminovos, com estimativas de <strong>seguro</strong> e <strong>manutenção</strong>.
         </p>
         
         <div className="flex flex-col sm:flex-row gap-4 w-full max-w-lg justify-center">
@@ -185,37 +254,68 @@ const App: React.FC = () => {
             
             <button
             onClick={() => setIsVoiceMode(true)}
-            className="flex-1 bg-slate-800 text-sky-400 border border-slate-700 font-bold py-4 px-6 rounded-xl hover:bg-slate-700 hover:border-sky-500/50 hover:text-sky-300 transition-all duration-300 text-lg flex items-center justify-center gap-2 uppercase tracking-wide"
+            className="flex-1 bg-slate-800 text-sky-400 border border-slate-700 font-bold py-4 px-6 rounded-xl hover:bg-slate-700 hover:border-sky-500/50 hover:text-sky-300 transition-all duration-300 text-lg flex items-center justify-center gap-2 group"
             >
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="group-hover:text-sky-300">
                 <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"></path>
                 <path d="M19 10v2a7 7 0 0 1-14 0v-2"></path>
                 <line x1="12" y1="19" x2="12" y2="23"></line>
                 <line x1="8" y1="23" x2="16" y2="23"></line>
-            </svg>
-            Usar Voz
+              </svg>
+              Usar Voz
             </button>
         </div>
       </div>
     );
   };
 
-
   return (
-    <div className="min-h-screen bg-slate-900 flex flex-col items-center justify-center p-4 font-sans selection:bg-sky-500/30 selection:text-sky-200">
-      <div className="w-full max-w-4xl mx-auto flex flex-col items-center">
-        <header className="mb-10 w-full flex justify-center">
-          <BrandLogo className="transform hover:scale-105 transition-transform duration-500" />
-        </header>
-        
-        <main className="w-full max-w-3xl bg-slate-800/40 p-6 sm:p-10 rounded-3xl shadow-2xl border border-slate-700/50 backdrop-blur-md">
-          {renderContent()}
-        </main>
-        
-        <footer className="mt-12 text-slate-500 text-sm font-medium tracking-wide text-center uppercase">
-          © {new Date().getFullYear()} Reinaldo Ribas. Todos os direitos reservados.
-        </footer>
-      </div>
+    <div className="min-h-screen bg-slate-900 text-slate-200 font-sans selection:bg-sky-500/30 selection:text-sky-200">
+        <div className="fixed inset-0 bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-slate-800 via-slate-900 to-slate-950 pointer-events-none"></div>
+        <div className="relative z-10 container mx-auto px-4 py-8 md:py-12 flex flex-col min-h-screen max-w-4xl">
+            
+            <header className="flex flex-col md:flex-row justify-between items-center mb-10 md:mb-16 animate-fade-in-down gap-4 relative">
+                 {/* Botão de Favoritos (Absolute no mobile para ficar no topo, ou flex no desktop) */}
+                 <div className="absolute right-0 top-0 md:static order-2 md:order-3">
+                    {!showFavorites && !isLoading && (
+                        <button 
+                            onClick={() => setShowFavorites(true)}
+                            className="relative group p-2 rounded-full bg-slate-800 border border-slate-700 hover:border-sky-500/50 transition-all"
+                            title="Meus Favoritos"
+                        >
+                            <HeartIcon className={`w-6 h-6 transition-colors ${favorites.length > 0 ? 'text-red-500' : 'text-slate-400 group-hover:text-red-400'}`} filled={favorites.length > 0} />
+                            {favorites.length > 0 && (
+                                <span className="absolute -top-1 -right-1 w-5 h-5 bg-sky-500 text-white text-xs font-bold flex items-center justify-center rounded-full shadow-md">
+                                    {favorites.length}
+                                </span>
+                            )}
+                        </button>
+                    )}
+                 </div>
+
+                <div className="w-full flex justify-center md:absolute md:inset-x-0 md:pointer-events-none order-1 md:order-2">
+                    <div onClick={handleReset} className="pointer-events-auto cursor-pointer">
+                        <BrandLogo />
+                    </div>
+                </div>
+
+                {/* Spacer para manter alinhamento no desktop */}
+                <div className="hidden md:block w-10 order-1"></div>
+            </header>
+
+            <main className="flex-1 flex flex-col items-center w-full">
+                {renderContent()}
+            </main>
+            
+            {/* Área de Propaganda Banner (Footer) */}
+            <div className="w-full mt-16 animate-fade-in">
+                <AdSpace variant="banner" />
+            </div>
+
+            <footer className="mt-8 text-center text-slate-500 text-sm animate-fade-in pb-4">
+                <p>COPYRIGHT REINALDO RIBAS 2025</p>
+            </footer>
+        </div>
     </div>
   );
 };

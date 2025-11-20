@@ -2,22 +2,43 @@
 import React from 'react';
 import type { CarRecommendation } from '../types';
 import CarCard from './CarCard';
+import { AdSpace } from './AdSpace';
 
 interface ResultsDisplayProps {
   recommendations: CarRecommendation[];
   onReset: () => void;
+  favorites: CarRecommendation[];
+  onToggleFavorite: (car: CarRecommendation) => void;
 }
 
-const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ recommendations, onReset }) => {
+const ResultsDisplay: React.FC<ResultsDisplayProps> = ({ recommendations, onReset, favorites, onToggleFavorite }) => {
   return (
     <div className="w-full animate-fade-in">
       <h2 className="text-3xl font-bold text-center mb-2 text-sky-400">Aqui estão suas recomendações!</h2>
-      <p className="text-slate-400 text-center mb-8">Baseado em suas respostas, estes são os 5 melhores carros para você:</p>
+      <p className="text-slate-400 text-center mb-8">Baseado em suas respostas, estes são os {recommendations.length} melhores carros para você:</p>
+      
       <div className="space-y-6">
-        {recommendations.map((car, index) => (
-          <CarCard key={index} car={car} />
-        ))}
+        {recommendations.map((car, index) => {
+          const isFavorite = favorites.some(fav => fav.modelName === car.modelName);
+          return (
+            <React.Fragment key={index}>
+              <CarCard 
+                car={car} 
+                isFavorite={isFavorite}
+                onToggleFavorite={onToggleFavorite}
+              />
+              
+              {/* Inserir Propaganda após o 3º item (index 2) para alta visibilidade no feed */}
+              {index === 2 && (
+                <div className="py-2 animate-fade-in">
+                   <AdSpace variant="card" className="border-sky-900/30 bg-sky-900/10" />
+                </div>
+              )}
+            </React.Fragment>
+          );
+        })}
       </div>
+
       <div className="mt-12 text-center pb-4">
         <button
           onClick={onReset}

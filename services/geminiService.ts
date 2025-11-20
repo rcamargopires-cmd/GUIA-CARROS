@@ -63,44 +63,68 @@ const responseSchema = {
       consumerRating: {
         type: Type.NUMBER,
         description: "Nota média de satisfação dos donos (de 0.0 a 5.0), baseada na reputação geral em sites especializados.",
+      },
+      insuranceCost: {
+        type: Type.STRING,
+        description: "Estimativa de valor médio ANUAL do seguro (ex: R$ 2.500/ano). Considere a localização do usuário se fornecida.",
+      },
+      maintenanceCost: {
+        type: Type.STRING,
+        description: "Estimativa de custo médio de manutenção básica anual ou revisões (ex: R$ 800/revisão).",
       }
     },
-    required: ["modelName", "searchTerm", "summary", "pros", "cons", "priceRange", "versions", "consumptionCity", "consumptionRoad", "consumerRating"],
+    required: ["modelName", "searchTerm", "summary", "pros", "cons", "priceRange", "versions", "consumptionCity", "consumptionRoad", "consumerRating", "insuranceCost", "maintenanceCost"],
   },
 };
 
-function formatPrompt(answers: Answers): string {
+function formatPrompt(answers: Answers, userLocation: string): string {
   return `
     Atue como um consultor de vendas experiente da 'Abraão Reze Seminovos'.
-    Com base nas seguintes preferências de um consumidor:
+    
+    DADOS DO CLIENTE:
     - Orçamento: ${answers.budget}
     - Uso principal: ${answers.usage}
+    - Preferência de Câmbio: ${answers.transmission}
     - Maior prioridade: ${answers.priority}
     - Lotação comum: ${answers.passengers}
     - Tipo de carroceria: ${answers.bodyType}
+    - LOCALIZAÇÃO DO CLIENTE: ${userLocation || "Brasil (Média Nacional)"}
 
-    Por favor, recomende EXATAMENTE 5 carros seminovos ideais disponíveis no mercado brasileiro (focando em modelos com boa liquidez e comuns em estoques de grandes revendas como a Abraão Reze).
+    Por favor, recomende EXATAMENTE 8 carros seminovos ideais disponíveis no mercado brasileiro.
 
-    CRITÉRIO DE EXCLUSÃO RÍGIDO: JAMAIS recomende carros equipados com o câmbio automatizado POWERSHIFT (comuns em modelos Ford como Fiesta, Focus e EcoSport de certos anos). Exclua esses modelos preventivamente devido ao histórico de problemas mecânicos.
+    DIRETRIZES DE ESTOQUE E MARCAS (ALTA PRIORIDADE):
+    1. Dê PREFERÊNCIA MÁXIMA para sugerir modelos das seguintes marcas: **Volkswagen, Hyundai, Caoa Chery (ou Chery), Audi, Omoda e GAC**.
+    2. Tente preencher a lista de recomendações prioritariamente com essas marcas.
+    3. Somente sugira outras marcas (como Fiat, GM/Chevrolet, Toyota, Honda, etc) se não houver nenhuma opção viável das marcas prioritárias acima que se encaixe no orçamento e uso do cliente.
+
+    RESTRIÇÃO DE ANO:
+    - Recomende APENAS veículos fabricados a partir do ano de **2014**.
+
+    CRITÉRIOS DE EXCLUSÃO RÍGIDOS (O QUE NÃO RECOMENDAR):
+    1. TRANSMISSÃO: JAMAIS recomende carros equipados com o câmbio automatizado POWERSHIFT (Ford).
+    2. FORA DE LINHA: JAMAIS recomende modelos que foram DESCONTINUADOS e não possuem mais versão 0km à venda no Brasil.
+       - Exemplos PROIBIDOS: VW Gol, VW Fox, VW Voyage, VW Up!, Ford Ka, Ford Fiesta, Ford EcoSport, Toyota Etios, Honda Fit, Fiat Palio, Fiat Uno, Fiat Punto.
+       - Recomende APENAS modelos que ainda estão "vivos" no mercado (ex: Polo, HB20, Onix, Creta, T-Cross, Tracker, Renegade, Compass, etc).
     
     Para cada carro, forneça:
-    1. O nome do modelo para exibição (Ex: Honda Civic, Toyota Corolla).
-    2. O termo de busca SIMPLIFICADO para o site (Ex: "Civic", "Corolla", "HB20", "Gol", "Mobi" - APENAS o nome principal do modelo, sem a marca e sem versão).
-    3. Um resumo conciso explicando por que ele é uma boa escolha para este perfil.
-    4. Uma lista de 3 pontos positivos (prós).
-    5. Uma lista de 3 pontos negativos (contras).
-    6. A faixa de preço de mercado estimada para seminovos deste modelo dentro do orçamento (Ex: "R$ 45.000 - R$ 55.000").
-    7. Uma lista das 3 principais VERSÕES encontradas nessa faixa de preço. Para cada versão, informe o NOME e os principais DIFERENCIAIS/EQUIPAMENTOS que a distinguem (ex: Nome: "LXR 2.0", Diferenciais: "Motor 2.0, Câmbio Borboleta, Bancos em Couro").
-    8. Consumo médio estimado na CIDADE com gasolina (ex: "10.5 km/l").
-    9. Consumo médio estimado na ESTRADA com gasolina (ex: "14.2 km/l").
-    10. Uma nota de satisfação do consumidor (0.0 a 5.0) baseada na reputação geral do modelo em sites como iCarros, Webmotors e Quatro Rodas.
+    1. O nome do modelo.
+    2. Termo de busca.
+    3. Resumo.
+    4. Prós e Contras.
+    5. Faixa de preço.
+    6. Versões principais.
+    7. Consumo (Cidade/Estrada).
+    8. Nota de satisfação.
+    9. **ESTIMATIVA DE SEGURO**: Calcule uma média aproximada anual considerando a categoria do carro e a LOCALIZAÇÃO do cliente (${userLocation}).
+    10. **CUSTO DE MANUTENÇÃO**: Estime o custo médio anual de manutenção básica.
     
     Seja específico e direto nas suas recomendações.
   `;
 }
 
-export async function getCarRecommendations(answers: Answers): Promise<CarRecommendation[]> {
-  const prompt = formatPrompt(answers);
+export async function getCarRecommendations(answers: Answers, userLocation: string): Promise<CarRecommendation[]> {
+  // Passamos a localização para o formatPrompt
+  const prompt = formatPrompt(answers, userLocation);
 
   try {
     const response = await ai.models.generateContent({
@@ -109,7 +133,7 @@ export async function getCarRecommendations(answers: Answers): Promise<CarRecomm
       config: {
         responseMimeType: "application/json",
         responseSchema: responseSchema,
-        temperature: 0.5,
+        temperature: 0.4, 
       },
     });
     
@@ -128,23 +152,36 @@ export async function getCarRecommendations(answers: Answers): Promise<CarRecomm
   }
 }
 
-export async function getCarRecommendationsFromAudio(base64Audio: string, mimeType: string): Promise<CarRecommendation[]> {
+export async function getCarRecommendationsFromAudio(base64Audio: string, mimeType: string, userLocation: string): Promise<CarRecommendation[]> {
   const promptText = `
     Atue como um consultor de vendas experiente da 'Abraão Reze Seminovos'.
     
     O usuário forneceu um áudio descrevendo o que procura em um carro seminovo.
+    A localização do usuário é: ${userLocation || "Média Nacional"}. Use isso para estimar o valor do SEGURO.
+
     Ouça com atenção e identifique:
-    - Orçamento (se não mencionado, deduza um valor médio razoável baseado no tipo de carro que ele pede).
-    - Uso principal (trabalho, família, viagens, etc).
-    - Preferências de estilo, marca ou categoria.
+    - Orçamento (se não mencionado, deduza um valor médio razoável).
+    - Uso principal.
+    - Preferência de Câmbio (Manual ou Automático).
+    - Preferências Gerais.
 
-    Com base no que você ouviu, recomende EXATAMENTE 5 carros seminovos ideais disponíveis no mercado brasileiro.
+    Com base no que você ouviu, recomende EXATAMENTE 8 carros seminovos ideais.
 
-    CRITÉRIO DE EXCLUSÃO RÍGIDO: JAMAIS recomende carros equipados com o câmbio automatizado POWERSHIFT.
+    DIRETRIZES DE ESTOQUE E MARCAS (ALTA PRIORIDADE):
+    1. Dê PREFERÊNCIA MÁXIMA para modelos das marcas: **Volkswagen, Hyundai, Caoa Chery (ou Chery), Audi, Omoda e GAC**.
+    2. Tente preencher a lista com essas marcas. Só sugira outras marcas se as prioritárias não atenderem ao pedido.
 
-    Inclua para cada carro uma nota de satisfação do consumidor (0.0 a 5.0) baseada na reputação online do veículo.
-    
-    Preencha todos os campos do esquema JSON solicitado com base na sua análise do áudio. Se o usuário foi vago, ofereça as melhores opções gerais para o contexto dele.
+    RESTRIÇÃO DE ANO:
+    - Recomende APENAS veículos fabricados a partir de **2014**.
+
+    CRITÉRIOS DE EXCLUSÃO RÍGIDOS: 
+    1. JAMAIS recomende carros equipados com o câmbio automatizado POWERSHIFT.
+    2. JAMAIS recomende carros FORA DE LINHA (descontinuados).
+       - Não sugira: Gol, Fox, Voyage, Ka, Fiesta, Ecosport, Etios, Fit, Uno, Palio, etc.
+       - Sugira APENAS modelos que ainda estão em produção (ex: Polo, HB20, Creta, T-Cross, etc).
+
+    Inclua estimativas de **Seguro Anual** (baseado na localização) e **Manutenção Anual**.
+    Preencha todos os campos do esquema JSON solicitado.
   `;
 
   try {
@@ -164,7 +201,7 @@ export async function getCarRecommendationsFromAudio(base64Audio: string, mimeTy
       config: {
         responseMimeType: "application/json",
         responseSchema: responseSchema,
-        temperature: 0.5,
+        temperature: 0.4,
       },
     });
 

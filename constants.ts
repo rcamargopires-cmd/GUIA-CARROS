@@ -13,6 +13,11 @@ export const QUESTIONS: Question[] = [
     options: ['Dia a dia na cidade', 'Viagens longas na estrada', 'Uso misto (cidade e estrada)', 'Trabalho (carga ou passageiros)'],
   },
   {
+    id: 'transmission',
+    text: 'Você prefere câmbio Automático ou Manual?',
+    options: ['Automático', 'Manual', 'Tanto faz'],
+  },
+  {
     id: 'priority',
     text: 'O que você mais valoriza em um carro?',
     options: ['Economia de combustível', 'Desempenho e potência', 'Conforto e tecnologia', 'Espaço interno e porta-malas'],
