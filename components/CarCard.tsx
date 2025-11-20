@@ -10,6 +10,7 @@ import { WrenchIcon } from './icons/WrenchIcon';
 import { HeartIcon } from './icons/HeartIcon';
 import { ShareIcon } from './icons/ShareIcon';
 import { CompareIcon } from './icons/CompareIcon';
+import { CarIcon } from './icons/CarIcon';
 
 interface CarCardProps {
   car: CarRecommendation;
@@ -31,6 +32,11 @@ const CarCard: React.FC<CarCardProps> = ({
   const [showDetails, setShowDetails] = useState(false);
   const [showVersionDiffs, setShowVersionDiffs] = useState(false);
   const [showCopiedToast, setShowCopiedToast] = useState(false);
+  const [imgError, setImgError] = useState(false);
+
+  // Gera uma URL de busca de imagem focada em estúdio e fundo escuro
+  // "studio shot black background" remove ambientes de loja e placas
+  const imageUrl = `https://tse4.mm.bing.net/th?q=${encodeURIComponent(car.modelName + " black car studio shot wallpaper 4k")}&w=700&h=400&c=7&rs=1&p=0`;
 
   const toggleDetails = () => setShowDetails(!showDetails);
 
@@ -98,76 +104,50 @@ const CarCard: React.FC<CarCardProps> = ({
 
   return (
     <div className={`
-        rounded-xl overflow-hidden shadow-lg transition-all duration-300 flex flex-col relative
+        rounded-xl overflow-hidden shadow-lg transition-all duration-300 flex flex-col relative group/card
         ${isSelectedForComparison 
             ? 'bg-slate-800 border-2 border-sky-500 shadow-[0_0_20px_rgba(14,165,233,0.3)]' 
             : 'bg-slate-800 border border-slate-700 hover:border-sky-500/50 hover:shadow-sky-900/40'}
     `}>
-      <div className="p-6 flex flex-col">
-        {/* Header Section (Always Visible & Clickable) */}
-        <div 
-          onClick={toggleDetails}
-          className="flex flex-col md:flex-row md:items-start md:justify-between gap-3 mb-4 border-b border-slate-700 pb-4 cursor-pointer group pr-28 md:pr-32"
-        >
-          <div className="flex flex-col gap-1">
-             <div className="flex items-center gap-2">
-                <h3 className="text-2xl font-bold text-sky-400 group-hover:text-sky-300 transition-colors">{car.modelName}</h3>
-                <svg 
-                    xmlns="http://www.w3.org/2000/svg" 
-                    width="20" 
-                    height="20" 
-                    viewBox="0 0 24 24" 
-                    fill="none" 
-                    stroke="currentColor" 
-                    strokeWidth="2" 
-                    strokeLinecap="round" 
-                    strokeLinejoin="round"
-                    className={`text-slate-500 transition-transform duration-300 ${showDetails ? 'rotate-180' : ''}`}
-                >
-                    <polyline points="6 9 12 15 18 9"></polyline>
-                </svg>
-             </div>
-             {/* Consumer Rating Display */}
-             <div className="flex items-center gap-2">
-                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Opinião do Dono:</span>
-                {renderStars(car.consumerRating || 0)}
-             </div>
-          </div>
-          
-          <div className="flex flex-col items-end mt-2 md:mt-0 mr-8 md:mr-0">
-            <span className="text-xs text-emerald-400 uppercase font-bold tracking-wider mb-1">Faixa de Preço</span>
-            <div className="inline-flex items-center bg-emerald-900/30 border border-emerald-500/30 rounded-lg px-3 py-1.5 shadow-sm">
-                <span className="text-emerald-100 font-bold text-base whitespace-nowrap">
-                   {car.priceRange}
-                </span>
-             </div>
-          </div>
-        </div>
+      
+      {/* Image Section */}
+      <div className="relative w-full h-48 md:h-60 overflow-hidden bg-slate-950">
+        {!imgError ? (
+            <img 
+                src={imageUrl} 
+                alt={car.modelName} 
+                className="w-full h-full object-cover transform group-hover/card:scale-105 transition-transform duration-700 brightness-[0.65] contrast-110"
+                onError={() => setImgError(true)}
+                loading="lazy"
+            />
+        ) : (
+            <div className="w-full h-full flex items-center justify-center bg-slate-800">
+                <CarIcon className="w-16 h-16 text-slate-700" />
+            </div>
+        )}
+        
+        {/* Gradient Overlay for Text readability and aesthetics - Stronger dark gradient */}
+        <div className="absolute inset-0 bg-gradient-to-t from-slate-900 via-slate-900/50 to-transparent opacity-90"></div>
 
-        {/* Action Buttons - Positioned Absolutely top right */}
-        <div className="absolute top-6 right-6 z-10 flex items-center gap-2">
+        {/* Floating Action Buttons over Image */}
+        <div className="absolute top-3 right-3 z-10 flex items-center gap-2">
              {/* Compare Button */}
              {onToggleComparison && (
                 <button
                     onClick={handleComparisonClick}
                     disabled={!isSelectedForComparison && disableComparison}
                     className={`
-                        p-2 rounded-full transition-colors relative group/compare
+                        p-2 rounded-full transition-colors relative group/compare backdrop-blur-sm
                         ${isSelectedForComparison 
                             ? 'bg-sky-500 text-white shadow-lg shadow-sky-500/30' 
                             : disableComparison
-                                ? 'bg-slate-800 text-slate-600 cursor-not-allowed'
-                                : 'bg-slate-900/50 text-slate-400 hover:bg-slate-700 hover:text-sky-400'
+                                ? 'bg-slate-900/50 text-slate-600 cursor-not-allowed border border-slate-700'
+                                : 'bg-slate-900/60 text-slate-300 hover:bg-sky-600 hover:text-white border border-slate-700/50'
                         }
                     `}
                     title={isSelectedForComparison ? "Remover da comparação" : disableComparison ? "Limite de comparação atingido" : "Comparar"}
                 >
                     <CompareIcon className="w-5 h-5" />
-                    {!isSelectedForComparison && !disableComparison && (
-                         <span className="absolute -bottom-8 left-1/2 -translate-x-1/2 bg-slate-900 text-white text-[10px] py-1 px-2 rounded opacity-0 group-hover/compare:opacity-100 transition-opacity whitespace-nowrap pointer-events-none border border-slate-700">
-                            Comparar
-                         </span>
-                    )}
                 </button>
             )}
 
@@ -175,7 +155,7 @@ const CarCard: React.FC<CarCardProps> = ({
             <div className="relative">
                 <button 
                     onClick={handleShareClick}
-                    className="p-2 rounded-full bg-slate-900/50 hover:bg-slate-700 transition-colors text-slate-400 hover:text-sky-400"
+                    className="p-2 rounded-full bg-slate-900/60 backdrop-blur-sm hover:bg-sky-600 border border-slate-700/50 transition-colors text-slate-300 hover:text-white"
                     title="Compartilhar"
                 >
                     <ShareIcon className="w-5 h-5" />
@@ -192,40 +172,69 @@ const CarCard: React.FC<CarCardProps> = ({
             {onToggleFavorite && (
                 <button 
                     onClick={handleFavoriteClick}
-                    className="p-2 rounded-full bg-slate-900/50 hover:bg-slate-700 transition-colors"
+                    className="p-2 rounded-full bg-slate-900/60 backdrop-blur-sm hover:bg-slate-800 border border-slate-700/50 transition-colors"
                     title={isFavorite ? "Remover dos favoritos" : "Adicionar aos favoritos"}
                 >
                     <HeartIcon 
-                        className={`w-6 h-6 transition-all duration-300 ${isFavorite ? 'text-red-500 scale-110' : 'text-slate-400 hover:text-red-400'}`} 
+                        className={`w-6 h-6 transition-all duration-300 ${isFavorite ? 'text-red-500 scale-110' : 'text-slate-300 hover:text-red-400'}`} 
                         filled={isFavorite} 
                     />
                 </button>
             )}
         </div>
 
+        {/* Price Badge on Image */}
+        <div className="absolute bottom-4 right-4 max-w-[80%] text-right">
+             <div className="inline-flex flex-col items-end bg-emerald-950/90 backdrop-blur-md border border-emerald-500/50 rounded-lg px-3 py-1.5 shadow-lg">
+                <span className="text-emerald-400 font-bold text-sm md:text-base whitespace-nowrap">
+                   {car.priceRange}
+                </span>
+                <span className="text-[10px] text-emerald-500/80 font-medium border-t border-emerald-500/20 pt-0.5 mt-0.5">
+                   {car.priceReference}
+                </span>
+             </div>
+        </div>
+      </div>
+
+      <div className="p-6 flex flex-col pt-4">
+        {/* Header Section (Always Visible & Clickable) */}
+        <div 
+          onClick={toggleDetails}
+          className="flex flex-col gap-1 mb-4 cursor-pointer group"
+        >
+             <div className="flex items-center justify-between gap-2">
+                <h3 className="text-2xl font-bold text-sky-400 group-hover:text-sky-300 transition-colors leading-tight">{car.modelName}</h3>
+                <svg 
+                    xmlns="http://www.w3.org/2000/svg" 
+                    width="20" 
+                    height="20" 
+                    viewBox="0 0 24 24" 
+                    fill="none" 
+                    stroke="currentColor" 
+                    strokeWidth="2" 
+                    strokeLinecap="round" 
+                    strokeLinejoin="round"
+                    className={`text-slate-500 transition-transform duration-300 ${showDetails ? 'rotate-180' : ''} flex-shrink-0`}
+                >
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                </svg>
+             </div>
+             {/* Consumer Rating Display */}
+             <div className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 uppercase tracking-wider font-semibold">Opinião do Dono:</span>
+                {renderStars(car.consumerRating || 0)}
+             </div>
+        </div>
+
         {/* Summary (Always Visible) */}
-        <p className="text-slate-300 mb-6 leading-relaxed">{car.summary}</p>
+        <p className="text-slate-300 mb-6 leading-relaxed text-sm md:text-base">{car.summary}</p>
 
         {/* Toggle Button */}
         <button
             onClick={toggleDetails}
-            className="mb-6 w-full flex items-center justify-center gap-2 py-2 px-4 bg-slate-700/50 hover:bg-slate-700 text-sky-400 rounded-lg transition-colors border border-slate-600 border-dashed hover:border-solid"
+            className="mb-6 w-full flex items-center justify-center gap-2 py-2 px-4 bg-slate-700/30 hover:bg-slate-700/50 text-sky-400 rounded-lg transition-colors border border-slate-600/50 border-dashed hover:border-solid"
         >
-            <span className="font-semibold">{showDetails ? 'Ocultar Detalhes' : 'Ver Custos, Consumo e Detalhes'}</span>
-            <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="20" 
-                height="20" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round"
-                className={`transition-transform duration-300 ${showDetails ? 'rotate-180' : ''}`}
-            >
-                <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
+            <span className="font-semibold text-sm">{showDetails ? 'Ocultar Detalhes' : 'Ver Custos, Consumo e Detalhes'}</span>
         </button>
 
         {/* Expandable Details Section */}
@@ -240,8 +249,8 @@ const CarCard: React.FC<CarCardProps> = ({
                             <FuelIcon className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-xs text-slate-400 uppercase font-semibold tracking-wider">Consumo Cidade</p>
-                            <p className="text-slate-200 font-medium">{car.consumptionCity}</p>
+                            <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Consumo Cidade</p>
+                            <p className="text-slate-200 font-medium text-sm">{car.consumptionCity}</p>
                         </div>
                     </div>
                     <div className="bg-slate-900/50 p-3 rounded-lg border border-slate-700/50 flex items-center gap-3">
@@ -249,8 +258,8 @@ const CarCard: React.FC<CarCardProps> = ({
                             <FuelIcon className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-xs text-slate-400 uppercase font-semibold tracking-wider">Consumo Estrada</p>
-                            <p className="text-slate-200 font-medium">{car.consumptionRoad}</p>
+                            <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Consumo Estrada</p>
+                            <p className="text-slate-200 font-medium text-sm">{car.consumptionRoad}</p>
                         </div>
                     </div>
 
@@ -261,8 +270,8 @@ const CarCard: React.FC<CarCardProps> = ({
                             <ShieldIcon className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-xs text-slate-400 uppercase font-semibold tracking-wider">Seguro Médio</p>
-                            <p className="text-slate-200 font-medium">{car.insuranceCost}</p>
+                            <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Seguro Médio</p>
+                            <p className="text-slate-200 font-medium text-sm">{car.insuranceCost}</p>
                         </div>
                     </div>
                     <div className="bg-slate-900/50 p-3 rounded-lg border border-orange-500/20 flex items-center gap-3 relative overflow-hidden">
@@ -271,8 +280,8 @@ const CarCard: React.FC<CarCardProps> = ({
                             <WrenchIcon className="w-5 h-5" />
                         </div>
                         <div>
-                            <p className="text-xs text-slate-400 uppercase font-semibold tracking-wider">Manutenção</p>
-                            <p className="text-slate-200 font-medium">{car.maintenanceCost}</p>
+                            <p className="text-[10px] text-slate-400 uppercase font-semibold tracking-wider">Manutenção</p>
+                            <p className="text-slate-200 font-medium text-sm">{car.maintenanceCost}</p>
                         </div>
                     </div>
                 </div>
@@ -289,9 +298,9 @@ const CarCard: React.FC<CarCardProps> = ({
                     >
                          <div className="flex items-center gap-3">
                             <div className={`p-1.5 rounded-md ${showVersionDiffs ? 'bg-sky-500 text-white' : 'bg-slate-600 text-slate-300'}`}>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="8" y1="6" x2="21" y2="6"></line><line x1="8" y1="12" x2="21" y2="12"></line><line x1="8" y1="18" x2="21" y2="18"></line><line x1="3" y1="6" x2="3.01" y2="6"></line><line x1="3" y1="12" x2="3.01" y2="12"></line><line x1="3" y1="18" x2="3.01" y2="18"></line></svg>
                             </div>
-                            <span className="font-semibold text-slate-200">Comparar Versões</span>
+                            <span className="font-semibold text-slate-200 text-sm">Comparar Versões</span>
                          </div>
                          <svg 
                             xmlns="http://www.w3.org/2000/svg" 
@@ -315,9 +324,9 @@ const CarCard: React.FC<CarCardProps> = ({
                                 <div key={idx} className="bg-slate-700/30 p-3 rounded-lg border border-slate-700">
                                     <div className="flex items-center gap-2 mb-1">
                                         <span className="w-2 h-2 rounded-full bg-sky-500"></span>
-                                        <h5 className="font-bold text-sky-200">{version.name}</h5>
+                                        <h5 className="font-bold text-sky-200 text-sm">{version.name}</h5>
                                     </div>
-                                    <p className="text-sm text-slate-300 pl-4">{version.features}</p>
+                                    <p className="text-xs md:text-sm text-slate-300 pl-4">{version.features}</p>
                                 </div>
                             ))}
                         </div>
@@ -327,27 +336,27 @@ const CarCard: React.FC<CarCardProps> = ({
                 {/* Pros and Cons */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
                     <div>
-                        <h4 className="font-semibold text-lg text-green-400 mb-3 flex items-center gap-2">
+                        <h4 className="font-semibold text-sm text-green-400 mb-3 flex items-center gap-2">
                         Pontos Positivos
                         </h4>
                         <ul className="space-y-2">
                         {car.pros.map((pro, index) => (
                             <li key={index} className="flex items-start p-2 rounded bg-green-900/10 border border-green-900/20">
-                            <CheckIcon className="w-5 h-5 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
-                            <span className="text-slate-300 text-sm">{pro}</span>
+                            <CheckIcon className="w-4 h-4 text-green-400 mr-2 mt-0.5 flex-shrink-0" />
+                            <span className="text-slate-300 text-xs md:text-sm">{pro}</span>
                             </li>
                         ))}
                         </ul>
                     </div>
                     <div>
-                        <h4 className="font-semibold text-lg text-red-400 mb-3 flex items-center gap-2">
+                        <h4 className="font-semibold text-sm text-red-400 mb-3 flex items-center gap-2">
                         Pontos de Atenção
                         </h4>
                         <ul className="space-y-2">
                         {car.cons.map((con, index) => (
                             <li key={index} className="flex items-start p-2 rounded bg-red-900/10 border border-red-900/20">
-                            <XIcon className="w-5 h-5 text-red-400 mr-2 mt-0.5 flex-shrink-0" />
-                            <span className="text-slate-300 text-sm">{con}</span>
+                            <XIcon className="w-4 h-4 text-red-400 mr-2 mt-0.5 flex-shrink-0" />
+                            <span className="text-slate-300 text-xs md:text-sm">{con}</span>
                             </li>
                         ))}
                         </ul>

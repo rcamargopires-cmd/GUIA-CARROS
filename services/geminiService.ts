@@ -38,7 +38,11 @@ const responseSchema = {
       },
       priceRange: {
           type: Type.STRING,
-          description: "A faixa estimada de preço de mercado (ex: R$ 50.000 - R$ 60.000).",
+          description: "A faixa de preço baseada na TABELA FIPE ATUAL (2024/2025) para o modelo usado (ex: R$ 50.000 - R$ 60.000).",
+      },
+      priceReference: {
+          type: Type.STRING,
+          description: "Identificação do Ano e Versão específicos usados para calcular essa faixa de preço. Ex: 'Ref: 2018 1.6 MSI', 'Ref: 2020 Turbo'.",
       },
       versions: {
           type: Type.ARRAY,
@@ -73,7 +77,7 @@ const responseSchema = {
         description: "Estimativa de custo médio de manutenção básica anual ou revisões (ex: R$ 800/revisão).",
       }
     },
-    required: ["modelName", "searchTerm", "summary", "pros", "cons", "priceRange", "versions", "consumptionCity", "consumptionRoad", "consumerRating", "insuranceCost", "maintenanceCost"],
+    required: ["modelName", "searchTerm", "summary", "pros", "cons", "priceRange", "priceReference", "versions", "consumptionCity", "consumptionRoad", "consumerRating", "insuranceCost", "maintenanceCost"],
   },
 };
 
@@ -108,14 +112,19 @@ function formatPrompt(answers: Answers, userLocation: string): string {
     
     Para cada carro, forneça os dados técnicos.
     
-    **ATENÇÃO ESPECIAL AOS CUSTOS (Seja Realista):**
+    **ATENÇÃO CRÍTICA AOS VALORES (Use Dados Reais/Atuais):**
 
-    9. **ESTIMATIVA DE SEGURO**: 
+    9. **PREÇO DE MERCADO (FIPE)**: 
+       - Utilize a **TABELA FIPE VIGENTE** como referência base para o cálculo do \`priceRange\`.
+       - Ajuste para a realidade de mercado de **SEMINOVOS**.
+       - **IMPORTANTE**: No campo \`priceReference\`, você DEVE especificar qual ano e versão exata usou para cotar esse valor (ex: "Ref: Fipe 2019 1.6 MSI"). O usuário precisa saber a qual ano o valor se refere.
+
+    10. **ESTIMATIVA DE SEGURO**: 
        - Use a LOCALIZAÇÃO (${userLocation}) para calibrar o valor. Se for uma capital ou região metropolitana (ex: SP, RJ), considere valores 20-30% mais altos que a média nacional.
        - Considere o perfil de risco do modelo (ex: SUVs muito visados tem seguro mais caro).
        - Formato esperado: "Aprox. R$ X.XXX/ano".
 
-    10. **CUSTO DE MANUTENÇÃO**: 
+    11. **CUSTO DE MANUTENÇÃO**: 
         - Estime o custo anual de manutenção básica (troca de óleo, filtros, desgaste natural).
         - Considere a CATEGORIA do carro: Importados e Premium (Audi, Chery SUVs maiores) devem ter manutenção mais cara que populares nacionais (VW, Hyundai compactos).
         - Formato esperado: "Média R$ X.XXX/ano".
@@ -161,7 +170,7 @@ export async function getCarRecommendations(answers: Answers, userLocation: stri
       config: {
         responseMimeType: "application/json",
         responseSchema: responseSchema,
-        temperature: 0.4, 
+        temperature: 0.3, // Reduzido ligeiramente para ser mais preciso nos valores Fipe
       },
     });
     
@@ -208,9 +217,11 @@ export async function getCarRecommendationsFromAudio(base64Audio: string, mimeTy
        - Não sugira: Gol, Fox, Voyage, Ka, Fiesta, Ecosport, Etios, Fit, Uno, Palio, etc.
        - Sugira APENAS modelos que ainda estão em produção.
 
-    **CÁLCULO DE CUSTOS:**
-    - **Seguro Anual**: Utilize a localização (${userLocation}) para estimar. Se for capital, aumente o valor. Considere se o carro é visado para roubo.
-    - **Manutenção Anual**: Considere a complexidade mecânica da marca e categoria (Premium > Popular).
+    **CÁLCULO DE CUSTOS E VALORES (FIPE):**
+    - **Preço (priceRange)**: Utilize obrigatoriamente a **Tabela Fipe atualizada**.
+    - **Referência de Preço (priceReference)**: Indique CLARAMENTE o ano e versão base do preço (ex: "Fipe 2018 1.0").
+    - **Seguro Anual**: Utilize a localização (${userLocation}) para estimar.
+    - **Manutenção Anual**: Considere a complexidade mecânica.
 
     Preencha todos os campos do esquema JSON solicitado.
   `;
@@ -232,7 +243,7 @@ export async function getCarRecommendationsFromAudio(base64Audio: string, mimeTy
       config: {
         responseMimeType: "application/json",
         responseSchema: responseSchema,
-        temperature: 0.4,
+        temperature: 0.3, // Reduzido para precisão nos dados numéricos
       },
     });
 

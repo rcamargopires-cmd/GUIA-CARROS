@@ -17,6 +17,7 @@ export interface CarRecommendation {
   pros: string[];
   cons:string[];
   priceRange: string;
+  priceReference: string;
   versions: CarVersion[];
   consumptionCity: string;
   consumptionRoad: string;

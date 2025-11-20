@@ -1,5 +1,5 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import type { CarRecommendation } from '../types';
 import { XIcon } from './icons/XIcon';
 import { CheckIcon } from './icons/CheckIcon';
@@ -7,6 +7,7 @@ import { FuelIcon } from './icons/FuelIcon';
 import { ShieldIcon } from './icons/ShieldIcon';
 import { WrenchIcon } from './icons/WrenchIcon';
 import { StarIcon } from './icons/StarIcon';
+import { CarIcon } from './icons/CarIcon';
 
 interface ComparisonViewProps {
   cars: CarRecommendation[];
@@ -51,21 +52,47 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ cars, onClose, onRemove
               <div className="p-4 font-bold text-slate-500 uppercase text-xs tracking-wider flex items-end pb-6">
                 Modelo
               </div>
-              {cars.map((car, idx) => (
-                <div key={idx} className="p-4 border-l border-slate-800 flex flex-col relative group">
-                  <button 
-                    onClick={() => onRemove(car)}
-                    className="absolute top-2 right-2 p-1 bg-slate-800 rounded-full text-slate-500 hover:text-red-400 hover:bg-slate-700 transition-colors opacity-0 group-hover:opacity-100"
-                    title="Remover da comparação"
-                  >
-                    <XIcon className="w-4 h-4" />
-                  </button>
-                  <h3 className="text-xl font-bold text-sky-400 mb-2">{car.modelName}</h3>
-                  <div className="text-xs font-bold text-emerald-400 bg-emerald-900/20 border border-emerald-500/20 px-2 py-1 rounded w-fit">
-                    {car.priceRange}
-                  </div>
-                </div>
-              ))}
+              {cars.map((car, idx) => {
+                 const imageUrl = `https://tse4.mm.bing.net/th?q=${encodeURIComponent(car.modelName + " black car studio shot wallpaper 4k")}&w=300&h=180&c=7&rs=1&p=0`;
+                 
+                 return (
+                    <div key={idx} className="p-4 border-l border-slate-800 flex flex-col relative group">
+                    <button 
+                        onClick={() => onRemove(car)}
+                        className="absolute top-2 right-2 z-10 p-1 bg-slate-900/80 rounded-full text-slate-500 hover:text-red-400 hover:bg-slate-800 transition-colors opacity-0 group-hover:opacity-100 border border-slate-700"
+                        title="Remover da comparação"
+                    >
+                        <XIcon className="w-4 h-4" />
+                    </button>
+                    
+                    {/* Miniatura da Imagem */}
+                    <div className="w-full h-24 bg-slate-950 rounded-lg mb-3 overflow-hidden relative">
+                         <img 
+                            src={imageUrl} 
+                            alt={car.modelName} 
+                            className="w-full h-full object-cover brightness-[0.65] contrast-110"
+                            onError={(e) => {
+                                (e.target as HTMLImageElement).style.display = 'none';
+                                (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
+                            }}
+                        />
+                         <div className="hidden absolute inset-0 flex items-center justify-center text-slate-600">
+                            <CarIcon className="w-8 h-8" />
+                        </div>
+                    </div>
+
+                    <h3 className="text-xl font-bold text-sky-400 mb-2 leading-tight">{car.modelName}</h3>
+                    <div className="flex flex-col gap-1">
+                        <div className="text-xs font-bold text-emerald-400 bg-emerald-900/20 border border-emerald-500/20 px-2 py-1 rounded w-fit">
+                            {car.priceRange}
+                        </div>
+                        <div className="text-[10px] text-emerald-500/70 px-1">
+                            {car.priceReference}
+                        </div>
+                    </div>
+                    </div>
+                );
+              })}
 
               {/* Row: Rating */}
               <div className="p-4 text-slate-400 font-semibold text-sm border-t border-slate-800 flex items-center">
