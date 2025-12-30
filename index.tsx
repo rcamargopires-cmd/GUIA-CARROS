@@ -1,12 +1,10 @@
-
 import React from 'react';
 import ReactDOM from 'react-dom/client';
 import App from './App';
+import './index.css'; // Se você não tiver esse arquivo, pode apagar esta linha
 
 const rootElement = document.getElementById('root');
-if (!rootElement) {
-  throw new Error("Could not find root element to mount to");
-}
+if (!rootElement) throw new Error('Falha ao encontrar o elemento root');
 
 const root = ReactDOM.createRoot(rootElement);
 root.render(
