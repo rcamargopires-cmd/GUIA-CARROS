@@ -42,7 +42,7 @@ const responseSchema = {
       },
       priceReference: {
           type: Type.STRING,
-          description: "Identificação do Ano e Versão específicos usados para calcular essa faixa de preço. Ex: 'Ref: 2018 1.6 MSI', 'Ref: 2020 Turbo'.",
+          description: "Identificação do Ano e Versão específicos usados para calcular essa faixa de preço. Ex: 'Ref: Fipe 2018 1.6 MSI', 'Ref: Fipe 2020 Turbo'.",
       },
       versions: {
           type: Type.ARRAY,
@@ -115,9 +115,11 @@ function formatPrompt(answers: Answers, userLocation: string): string {
     **ATENÇÃO CRÍTICA AOS VALORES (Use Dados Reais/Atuais):**
 
     9. **PREÇO DE MERCADO (FIPE)**: 
-       - Utilize a **TABELA FIPE VIGENTE** como referência base para o cálculo do \`priceRange\`.
+       - Utilize a **TABELA FIPE VIGENTE (2024/2025)** como referência base para o cálculo do \`priceRange\`.
        - Ajuste para a realidade de mercado de **SEMINOVOS**.
-       - **IMPORTANTE**: No campo \`priceReference\`, você DEVE especificar qual ano e versão exata usou para cotar esse valor (ex: "Ref: Fipe 2019 1.6 MSI"). O usuário precisa saber a qual ano o valor se refere.
+       - **OBRIGATÓRIO**: No campo \`priceReference\`, você DEVE especificar qual ANO e VERSÃO exata usou para cotar esse valor.
+         - Exemplo Correto: "Ref: Fipe 2021 1.0 Comfort", "Ref: Fipe 2019 Longitude Diesel".
+         - Isso é crucial para o cliente saber se o preço é de um modelo 2015 ou 2022.
 
     10. **ESTIMATIVA DE SEGURO**: 
        - Use a LOCALIZAÇÃO (${userLocation}) para calibrar o valor. Se for uma capital ou região metropolitana (ex: SP, RJ), considere valores 20-30% mais altos que a média nacional.
@@ -218,8 +220,8 @@ export async function getCarRecommendationsFromAudio(base64Audio: string, mimeTy
        - Sugira APENAS modelos que ainda estão em produção.
 
     **CÁLCULO DE CUSTOS E VALORES (FIPE):**
-    - **Preço (priceRange)**: Utilize obrigatoriamente a **Tabela Fipe atualizada**.
-    - **Referência de Preço (priceReference)**: Indique CLARAMENTE o ano e versão base do preço (ex: "Fipe 2018 1.0").
+    - **Preço (priceRange)**: Utilize obrigatoriamente a **Tabela Fipe VIGENTE (2024/2025)**.
+    - **Referência de Preço (priceReference)**: Indique CLARAMENTE o ano e versão base do preço (ex: "Ref: Fipe 2018 1.0 Flex").
     - **Seguro Anual**: Utilize a localização (${userLocation}) para estimar.
     - **Manutenção Anual**: Considere a complexidade mecânica.
 

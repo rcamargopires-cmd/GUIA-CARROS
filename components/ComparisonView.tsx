@@ -53,7 +53,8 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ cars, onClose, onRemove
                 Modelo
               </div>
               {cars.map((car, idx) => {
-                 const imageUrl = `https://tse4.mm.bing.net/th?q=${encodeURIComponent(car.modelName + " black car studio shot wallpaper 4k")}&w=300&h=180&c=7&rs=1&p=0`;
+                 // Updated for black background studio shots
+                 const imageUrl = `https://tse4.mm.bing.net/th?q=${encodeURIComponent(car.modelName + " studio shot black background car wallpaper 4k")}&w=300&h=180&c=7&rs=1&p=0`;
                  
                  return (
                     <div key={idx} className="p-4 border-l border-slate-800 flex flex-col relative group">
@@ -70,7 +71,7 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ cars, onClose, onRemove
                          <img 
                             src={imageUrl} 
                             alt={car.modelName} 
-                            className="w-full h-full object-cover brightness-[0.65] contrast-110"
+                            className="w-full h-full object-cover brightness-[0.6] contrast-125"
                             onError={(e) => {
                                 (e.target as HTMLImageElement).style.display = 'none';
                                 (e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden');
@@ -86,9 +87,11 @@ const ComparisonView: React.FC<ComparisonViewProps> = ({ cars, onClose, onRemove
                         <div className="text-xs font-bold text-emerald-400 bg-emerald-900/20 border border-emerald-500/20 px-2 py-1 rounded w-fit">
                             {car.priceRange}
                         </div>
-                        <div className="text-[10px] text-emerald-500/70 px-1">
-                            {car.priceReference}
-                        </div>
+                        {car.priceReference && (
+                            <div className="text-[10px] text-emerald-500/70 px-1">
+                                {car.priceReference}
+                            </div>
+                        )}
                     </div>
                     </div>
                 );

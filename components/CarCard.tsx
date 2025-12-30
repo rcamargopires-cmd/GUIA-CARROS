@@ -36,7 +36,7 @@ const CarCard: React.FC<CarCardProps> = ({
 
   // Gera uma URL de busca de imagem focada em estúdio e fundo escuro
   // "studio shot black background" remove ambientes de loja e placas
-  const imageUrl = `https://tse4.mm.bing.net/th?q=${encodeURIComponent(car.modelName + " black car studio shot wallpaper 4k")}&w=700&h=400&c=7&rs=1&p=0`;
+  const imageUrl = `https://tse4.mm.bing.net/th?q=${encodeURIComponent(car.modelName + " studio shot black background car wallpaper 4k")}&w=700&h=400&c=7&rs=1&p=0`;
 
   const toggleDetails = () => setShowDetails(!showDetails);
 
@@ -116,7 +116,7 @@ const CarCard: React.FC<CarCardProps> = ({
             <img 
                 src={imageUrl} 
                 alt={car.modelName} 
-                className="w-full h-full object-cover transform group-hover/card:scale-105 transition-transform duration-700 brightness-[0.65] contrast-110"
+                className="w-full h-full object-cover transform group-hover/card:scale-105 transition-transform duration-700 brightness-[0.6] contrast-125"
                 onError={() => setImgError(true)}
                 loading="lazy"
             />
@@ -189,9 +189,11 @@ const CarCard: React.FC<CarCardProps> = ({
                 <span className="text-emerald-400 font-bold text-sm md:text-base whitespace-nowrap">
                    {car.priceRange}
                 </span>
-                <span className="text-[10px] text-emerald-500/80 font-medium border-t border-emerald-500/20 pt-0.5 mt-0.5">
-                   {car.priceReference}
-                </span>
+                {car.priceReference && (
+                    <span className="text-[10px] text-emerald-500/80 font-medium border-t border-emerald-500/20 pt-0.5 mt-0.5">
+                    {car.priceReference}
+                    </span>
+                )}
              </div>
         </div>
       </div>
