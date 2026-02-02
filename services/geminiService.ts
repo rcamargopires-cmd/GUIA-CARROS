@@ -1,11 +1,9 @@
-import { GoogleGenAI } from "@google/genai";
+
+import { GoogleGenAI, Type } from "@google/genai";
 import type { Answers, CarRecommendation } from '../types';
 
-// Inicialização correta usando a variável de ambiente do Vite
-const genAI = new GoogleGenAI(import.meta.env.VITE_GEMINI_API_KEY);
+const ai = new GoogleGenAI({ apiKey: process.env.API_KEY as string });
 
-// Configuração do modelo (recomendado usar o 1.5-flash por ser mais rápido)
-const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 // Shared Schema for both text and audio based recommendations
 const responseSchema = {
   type: Type.ARRAY,
