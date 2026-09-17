@@ -3,15 +3,37 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <meta name="description" content="Seminovo sem Surpresa — o guia prático de Carla Moraes para escolher, avaliar, negociar e comprar um carro seminovo com mais segurança." />
+    <meta name="description" content="Seminovo sem Surpresa — o guia prático de Arthur Longobuco para escolher, avaliar, negociar e comprar um carro seminovo com mais segurança." />
     <meta name="theme-color" content="#0d0d0e" />
-    <title>Seminovo sem Surpresa | Carla Moraes</title>
+    <title>Seminovo sem Surpresa | Arthur Longobuco</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
   </head>
   <body>
     <div id="root"></div>
+    <script>
+      const replaceAuthorText = () => {
+        const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
+        const nodes = [];
+        while (walker.nextNode()) nodes.push(walker.currentNode);
+        for (const node of nodes) {
+          let t = node.nodeValue || '';
+          t = t.replaceAll('Carla Moraes','Arthur Longobuco');
+          t = t.replaceAll('CARLA MORAES','ARTHUR LONGOBUCO');
+          t = t.replaceAll('Sobre a autora','Sobre o autor');
+          t = t.replaceAll('sobre a autora','sobre o autor');
+          t = t.replaceAll('é autora de','é autor de');
+          if (t.trim() === 'CM') t = t.replace('CM','AL');
+          node.nodeValue = t;
+        }
+      };
+      const observer = new MutationObserver(replaceAuthorText);
+      observer.observe(document.documentElement,{childList:true,subtree:true});
+      window.addEventListener('load',replaceAuthorText);
+      setTimeout(replaceAuthorText,100);
+      setTimeout(replaceAuthorText,500);
+    </script>
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>
