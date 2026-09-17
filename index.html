@@ -27,6 +27,13 @@
           if (t.trim() === 'CM') t = t.replace('CM','AL');
           node.nodeValue = t;
         }
+
+        document.querySelectorAll('p').forEach((p) => {
+          const txt = (p.textContent || '').trim();
+          if (txt.startsWith('Os relatos abaixo são ilustrativos')) {
+            p.remove();
+          }
+        });
       };
       const observer = new MutationObserver(replaceAuthorText);
       observer.observe(document.documentElement,{childList:true,subtree:true});
