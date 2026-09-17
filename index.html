@@ -13,7 +13,9 @@
   <body>
     <div id="root"></div>
     <script>
-      const replaceAuthorText = () => {
+      const checkoutUrl = 'https://pay.kiwify.com.br/CT5Hlem';
+
+      const updatePage = () => {
         const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
         const nodes = [];
         while (walker.nextNode()) nodes.push(walker.currentNode);
@@ -24,22 +26,37 @@
           t = t.replaceAll('Sobre a autora','Sobre o autor');
           t = t.replaceAll('sobre a autora','sobre o autor');
           t = t.replaceAll('é autora de','é autor de');
+          t = t.replaceAll('Vendas em preparação. Confira a disponibilidade.','Compra segura pela Kiwify.');
           if (t.trim() === 'CM') t = t.replace('CM','AL');
           node.nodeValue = t;
         }
 
         document.querySelectorAll('p').forEach((p) => {
           const txt = (p.textContent || '').trim();
-          if (txt.startsWith('Os relatos abaixo são ilustrativos')) {
-            p.remove();
+          if (txt.startsWith('Os relatos abaixo são ilustrativos')) p.remove();
+        });
+
+        const purchaseLabels = [
+          'Quero comprar com mais segurança',
+          'Quero o guia por R$ 39,90',
+          'Comece pelo guia'
+        ];
+        document.querySelectorAll('a').forEach((a) => {
+          const txt = (a.textContent || '').trim();
+          if (purchaseLabels.some(label => txt.includes(label))) {
+            a.setAttribute('href', checkoutUrl);
+            a.setAttribute('target', '_self');
+            a.setAttribute('rel', 'noopener');
           }
         });
       };
-      const observer = new MutationObserver(replaceAuthorText);
+
+      const observer = new MutationObserver(updatePage);
       observer.observe(document.documentElement,{childList:true,subtree:true});
-      window.addEventListener('load',replaceAuthorText);
-      setTimeout(replaceAuthorText,100);
-      setTimeout(replaceAuthorText,500);
+      window.addEventListener('load',updatePage);
+      setTimeout(updatePage,100);
+      setTimeout(updatePage,500);
+      setTimeout(updatePage,1200);
     </script>
     <script type="module" src="/index.tsx"></script>
   </body>
