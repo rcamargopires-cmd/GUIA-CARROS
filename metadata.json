@@ -1,8 +1,0 @@
-{
-  "requestFramePermissions": [
-    "microphone",
-    "geolocation"
-  ],
-  "name": "Guia de Carros Seminovos",
-  "description": ""
-}
