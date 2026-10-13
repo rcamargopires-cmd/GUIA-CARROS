@@ -13,6 +13,10 @@ const schema = {
   }, required:["resumo","observacoes","limitacoes"]
 };
 
+export async function GET() {
+  return NextResponse.json({available:Boolean(process.env.OPENAI_API_KEY)},{headers:{"cache-control":"no-store"}});
+}
+
 export async function POST(request: NextRequest) {
   const key = process.env.OPENAI_API_KEY;
   if (typeof key !== "string" || !key) return NextResponse.json({error:"A análise por IA ainda não foi ativada neste app."},{status:503});
